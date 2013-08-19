@@ -1,9 +1,9 @@
 /*
- * $Revision: 3569 $
+ * $Revision: 3533 $
  *
  * last checkin:
- *   $Author: gutwenger $
- *   $Date: 2013-06-18 11:04:33 +0200 (Di, 18. Jun 2013) $
+ *   $Author: beyer $
+ *   $Date: 2013-06-04 02:22:41 +1000 (Di, 04 Jun 2013) $
  ***************************************************************/
 
 /** \file
@@ -107,7 +107,7 @@ void GmlParser::createObjectTree(istream &is, bool doCheck)
 }
 
 // we use predefined id constants for all relevant keys
-// this allows us to use efficient switch() statemnts in read() methods
+// this allows us to use efficient switch() statements in read() methods
 void GmlParser::initPredefinedKeys()
 {
 	m_hashTable.fastInsert("id",       idPredefKey);
@@ -255,7 +255,7 @@ bool GmlParser::getLine()
 		if (m_is->fail())
 			return false;
 		for(m_pCurrent = m_lineBuffer;
-			*m_pCurrent && isspace((int)*m_pCurrent); ++m_pCurrent) ;
+			*m_pCurrent && isspace(*m_pCurrent); ++m_pCurrent) ;
 	} while (*m_pCurrent == '#' || *m_pCurrent == 0);
 
 	return true;
@@ -267,7 +267,7 @@ GmlObjectType GmlParser::getNextSymbol()
 	*m_pStore = m_cStore;
 
 	// eat whitespace
-	for(; *m_pCurrent && isspace((int)*m_pCurrent); ++m_pCurrent) ;
+	for(; *m_pCurrent && isspace(*m_pCurrent); ++m_pCurrent) ;
 
 	// get new line if required
 	if (*m_pCurrent == 0) {
@@ -367,17 +367,17 @@ GmlObjectType GmlParser::getNextSymbol()
 	}
 
 	// identify end of current symbol
-	while(*m_pCurrent != 0 && !isspace((int)*m_pCurrent)) ++m_pCurrent;
+	while(*m_pCurrent != 0 && !isspace(*m_pCurrent)) ++m_pCurrent;
 
 	m_cStore = *(m_pStore = m_pCurrent);
 	*m_pCurrent = 0;
 
-	if(isalpha((int)*pStart)) { // key
+	if(isalpha(*pStart)) { // key
 
 		// check if really a correct key (error if not)
 		if (m_doCheck) {
 			for (char *p = pStart+1; *p; ++p)
-				if (!(isalpha((int)*p) || isdigit((int)*p))) {
+				if (!(isalpha(*p) || isdigit(*p))) {
 					setError("malformed key");
 					return gmlError;
 				}
@@ -392,9 +392,9 @@ GmlObjectType GmlParser::getNextSymbol()
 	} else if (*pStart == ']') {
 		return gmlListEnd;
 
-	} else if (*pStart == '-' || isdigit((int)*pStart)) { // int or double
+	} else if (*pStart == '-' || isdigit(*pStart)) { // int or double
 		char *p = pStart+1;
-		while(isdigit((int)*p)) ++p;
+		while(isdigit(*p)) ++p;
 
 		if (*p == '.') { // double
 			// check to be done
@@ -600,6 +600,7 @@ bool GmlParser::read(Graph &G, GraphAttributes &AG)
 			float lineWidth = 1.0f; //node line width
 			int    pattern = 1; //node brush pattern
 			int    stipple = 1; //line style pattern
+			int weight; // node weight
 
 			// read all relevant attributes
 			GmlObject *nodeSon = son->m_pFirstSon;
@@ -678,7 +679,13 @@ bool GmlParser::read(Graph &G, GraphAttributes &AG)
 
 					label = nodeSon->m_stringValue;
 					break;
+
+				case edgeWeightPredefKey: //sic!
+					if(nodeSon->m_valueType != gmlIntValue) break;
+					weight = nodeSon->m_intValue;
+					break;
 				}
+				
 			}
 
 			// check if everything required is defined correctly
@@ -704,6 +711,8 @@ bool GmlParser::read(Graph &G, GraphAttributes &AG)
 				AG.templateNode(m_mapToNode[vId]) = templ;
 			if (AG.attributes() & GraphAttributes::nodeId)
 				AG.idNode(m_mapToNode[vId]) = vId;
+			if (AG.attributes() & GraphAttributes::nodeWeight)
+				AG.weight(m_mapToNode[vId]) = weight;
 			if (AG.attributes() & GraphAttributes::nodeStyle)
 			{
 				AG.fillColor(m_mapToNode[vId]) = fill;
@@ -953,9 +962,9 @@ bool GmlParser::clusterRead(
 
 				//we only allow a vertex id as string identification
 				if ((vIDString[0] != 'v') &&
-					(!isdigit((int)vIDString[0])))return false; //do not allow labels
+					(!isdigit(vIDString[0])))return false; //do not allow labels
 				//if old style entry "v"i
-				if (!isdigit((int)vIDString[0])) //should check prefix?
+				if (!isdigit(vIDString[0])) //should check prefix?
 					vIDString[0] = '0'; //leading zero to allow conversion
 				int vID = stoi(vIDString);
 
@@ -1021,9 +1030,9 @@ bool GmlParser::attributedClusterRead(
 
 				//we only allow a vertex id as string identification
 				if ((vIDString[0] != 'v') &&
-					(!isdigit((int)vIDString[0])))return false; //do not allow labels
+					(!isdigit(vIDString[0])))return false; //do not allow labels
 				//if old style entry "v"i
-				if (!isdigit((int)vIDString[0])) //should check prefix?
+				if (!isdigit(vIDString[0])) //should check prefix?
 					vIDString[0] = '0'; //leading zero to allow conversion
 				int vID = stoi(vIDString);
 
@@ -1154,9 +1163,9 @@ bool GmlParser::recursiveClusterRead(GmlObject* clusterObject,
 
 					//if old style entry "v"i
 					if ((vIDString[0] != 'v') &&
-						(!isdigit((int)vIDString[0])))return false; //do not allow labels
+						(!isdigit(vIDString[0])))return false; //do not allow labels
 					//if old style entry "v"i
-					if (!isdigit((int)vIDString[0])) //should check prefix?
+					if (!isdigit(vIDString[0])) //should check prefix?
 						vIDString[0] = '0'; //leading zero to allow conversion
 					int vID = stoi(vIDString);
 
@@ -1230,9 +1239,9 @@ bool GmlParser::recursiveAttributedClusterRead(GmlObject* clusterObject,
 					string vIDString = clusterSon->m_stringValue;
 
 					if ((vIDString[0] != 'v') &&
-						(!isdigit((int)vIDString[0])))return false; //do not allow labels
+						(!isdigit(vIDString[0])))return false; //do not allow labels
 					//if old style entry "v"i
-					if (!isdigit((int)vIDString[0])) //should check prefix?
+					if (!isdigit(vIDString[0])) //should check prefix?
 						vIDString[0] = '0'; //leading zero to allow conversion
 					int vID = stoi(vIDString);
 
